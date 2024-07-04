@@ -1,0 +1,13 @@
+### For Testing
+
+### Set telegram Webhook is current host (not usage in localhost)
+GET http://localhost/api/telegram/
+
+
+### Test Update (message text "Пр")
+POST http://localhost/api/telegram/
+Content-Type: application/json
+
+{"update_id":250137517,"message":{"message_id":6129,"from":{"id":1359415063,"is_bot":false,"first_name":"\u041a\u043b\u0443\u0431\u043d\u0456\u0447\u043a\u0430","username":"Teri_anric","language_code":"uk","is_premium":true},"chat":{"id":1359415063,"first_name":"\u041a\u043b\u0443\u0431\u043d\u0456\u0447\u043a\u0430","username":"Teri_anric","type":"private"},"date":1720072672,"text":"\u043f\u0440"}}
+
+###
