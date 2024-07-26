@@ -8,6 +8,8 @@ services:
   db:
     image: postgres
     restart: always
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -15,16 +17,14 @@ services:
       POSTGRES_HOST_AUTH_METHOD: md5
     volumes:
       - db_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     networks:
       - app_network
 
   backend:
     build: .
     restart: always
-    volumes:
-      - .:/app
     env_file:
       - .env
     expose:
@@ -33,38 +33,6 @@ services:
       - db
     networks:
       - app_network
-
-#  celery:
-#    build: .
-#    command: celery -A derisk_alert.celery_conf worker --loglevel=INFO
-#    volumes:
-#      - .:/app
-#    depends_on:
-#      - redis
-#      - db
-#    networks:
-#      - app_network
-#
-#  celery_beat:
-#    build: .
-#    command: celery -A derisk_alert.celery_conf beat --loglevel=INFO
-#    volumes:
-#      - .:/app
-#    depends_on:
-#      - redis
-#      - db
-#    networks:
-#      - app_network
-#
-#  redis:
-#    image: redis:latest
-#    restart: always
-#    ports:
-#      - "6379:6379"
-#    volumes:
-#      - redis_data:/data
-#    networks:
-#      - app_network
 
   nginx:
     restart: unless-stopped
@@ -77,8 +45,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-#      - .:/app
+#      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./staticfiles:/app/staticfiles
     depends_on:
       - backend
     networks:
@@ -86,4 +54,3 @@ services:
 
 volumes:
   db_data:
-#  redis_data:

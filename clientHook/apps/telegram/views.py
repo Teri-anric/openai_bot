@@ -3,18 +3,26 @@ from django.http import HttpRequest
 from json import loads
 from .telegram_bot.base import dp, bot
 from .telegram_bot.utils import prepare_response
+from .telegram_bot.settting import TELEGRAM_PUBLIC_KEY, ALLOW_UPDATES
 from aiogram.dispatcher.event.bases import UNHANDLED
 from aiogram.methods import TelegramMethod
+from aiogram.types import FSInputFile
+from django.views.decorators.csrf import csrf_exempt
 
 
+@csrf_exempt
 async def telegram_webhook(request: HttpRequest):
     if request.method == "GET":
         url = request.get_host() + request.get_full_path()
         try:
-            result = await bot.set_webhook(url)
+            certify = None
+            if TELEGRAM_PUBLIC_KEY:
+                certify = FSInputFile(TELEGRAM_PUBLIC_KEY)
+            result = await bot.set_webhook(url, certificate=certify,
+                                           allowed_updates=ALLOW_UPDATES)
+            return JsonResponse(dict(status=result))
         except Exception as e:
-            result = str(e)
-        return JsonResponse(result)
+            return JsonResponse(dict(status=False, error_message=str(e)))
 
     if request.method != "POST":
         return HttpResponse(status=405)
@@ -24,4 +32,3 @@ async def telegram_webhook(request: HttpRequest):
         return await prepare_response(bot, result)
 
     return HttpResponse(status=200)
-

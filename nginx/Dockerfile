@@ -1,6 +1,6 @@
 FROM nginx:stable-alpine
 
-#COPY ./fullchain.pem /etc/letsencrypt/live/the-boats.eu/
-#COPY ./privkey.pem /etc/letsencrypt/live/the-boats.eu/
+COPY private.key /etc/ssl/public.key
+COPY public.pem /etc/ssl/private.pem
 
 COPY ./default.conf /etc/nginx/conf.d/default.conf

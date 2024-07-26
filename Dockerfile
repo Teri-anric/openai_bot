@@ -6,18 +6,24 @@ WORKDIR /app
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
-#ENV PYTHONPATH "${PYTHONPATH}:/app"
 ENV POETRY_VIRTUALENVS_CREATE=False
-#&& poetry config virtualenvs.create false
+# RUN poetry config virtualenvs.create false
 
 
 ADD clientHook/ /app/clientHook/
 ADD manage.py /app/manage.py
 ADD pyproject.toml /app/pyproject.toml
+ADD entrypoint.sh /app/entrypoint.sh
+
+ADD staticfiles /app/staticfiles
+
+# copy public key
+ADD nginx/public.pem /app/public.pem
+ENV TELEGRAM_PUBLIC_KEY=/app/public.pem
 
 RUN pip install poetry
 RUN poetry install  --no-dev --no-interaction --no-ansi
 
-ENTRYPOINT ["uvicorn", "clientHook.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["bash", "/app/entrypoint.sh"]
 
 EXPOSE 8000
