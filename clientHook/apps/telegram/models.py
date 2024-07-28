@@ -1,18 +1,27 @@
 from django.db import models
 import json
-
+from aiogram import types as telegram_types
 from django.utils import timezone
 
 
 class InstructionGPT(models.Model):
-    prompt_text = models.TextField()
+    prompt_text = models.TextField(default="Help with questions in the chat.")
     gpt_model = models.TextField(default="gpt-3.5-turbo")
+
+    max_messages = models.IntegerField()
+    max_interval = models.DurationField()
+
+    def __str__(self):
+        return self.prompt_text
 
 
 class GPTResponse(models.Model):
     text = models.TextField()
 
     created_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.text
 
 
 class TelegramUser(models.Model):
@@ -44,6 +53,20 @@ class TelegramUser(models.Model):
             return f"{self.last_name} {self.first_name}"
         return self.first_name
 
+    @classmethod
+    def from_telegram_user(cls, user: telegram_types.User):
+        return cls(
+            id=user.id,
+            last_name=user.last_name,
+            first_name=user.first_name
+        )
+
+    @classmethod
+    async def create_and_asave_from_telegram_user(cls, user: telegram_types.User):
+        obj = cls.from_telegram_user(user)
+        await obj.asave()
+        return obj
+
     def __str__(self):
         return self.full_name
 
@@ -59,9 +82,10 @@ class TelegramGroup(models.Model):
     """
 
     id = models.BigIntegerField(primary_key=True, unique=True)
+
     title = models.CharField(max_length=256)
     admins = models.ManyToManyField(TelegramUser)
-    gpt_instruction = models.ForeignKey(InstructionGPT, on_delete=models.CASCADE)
+    gpt_instruction = models.ForeignKey(InstructionGPT, null=True, on_delete=models.SET_NULL)
 
     created_at = models.DateTimeField(auto_now=True)
 
@@ -83,7 +107,7 @@ class TelegramMessages(models.Model):
 
     message_id = models.BigIntegerField(null=False)
     user = models.ForeignKey(TelegramUser, null=True, on_delete=models.CASCADE)
-    group = models.ForeignKey(TelegramGroup, on_delete=models.CASCADE, null=True)
+    group = models.ForeignKey(TelegramGroup, null=True, on_delete=models.CASCADE)
     # group is null the private user chat
 
     created_at = models.DateTimeField(auto_now=True)
@@ -98,8 +122,4 @@ class TelegramMessages(models.Model):
         return self.answer is not None
 
     def __str__(self):
-        return json.dumps(dict(
-            message_id=self.message_id,
-            user=self.user.full_name,
-            text=self.text
-        ))
+        return f"{self.group or ''}>{self.user}: {self.text}"

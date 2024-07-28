@@ -24,6 +24,4 @@ ENV TELEGRAM_PUBLIC_KEY=/app/public.pem
 RUN pip install poetry
 RUN poetry install  --no-dev --no-interaction --no-ansi
 
-ENTRYPOINT ["bash", "/app/entrypoint.sh"]
-
 EXPOSE 8000

@@ -6,30 +6,23 @@ from aiogram.types import TelegramObject, User, Chat
 
 from clientHook.apps.telegram.models import TelegramUser, TelegramGroup
 
+from aiogram.dispatcher.middlewares.user_context import EVENT_CONTEXT_KEY, EventContext
 
-class SaveUserMiddleware(BaseMiddleware):
+
+class GetDBContextMiddleware(BaseMiddleware):
     async def __call__(self, handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]], event: TelegramObject,
                        data: Dict[str, Any]) -> Any:
-        event_from_user: User | None = data.get("event_from_user", None)
+        event_context: EventContext = data.get(EVENT_CONTEXT_KEY, None)
+        # get and save user
         db_user = None
-        if event_from_user is not None:
-            db_user = TelegramUser(
-                id=event_from_user.id,
-                last_name=event_from_user.last_name,
-                first_name=event_from_user.first_name
-            )
+        if event_context.user is not None:
+            db_user = TelegramUser.from_telegram_user(event_context.user)
             await db_user.asave()
-        data['db_user'] = db_user
-        await handler(event, data)
-
-
-class GroupMiddleware(BaseMiddleware):
-    async def __call__(self, handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]], event: TelegramObject,
-                       data: Dict[str, Any]) -> Any:
-        event_from_chat: Chat | None = data.get("event_from_chat", None)
+        # get group
         db_group = None
-        if event_from_chat is not None:
-            with suppress(TelegramGroup.DoesNotExist):  # type: ignore
-                db_group = await TelegramGroup.objects.aget(event_from_chat.id)
-        data['db_group'] = db_group
-        await handler(event, data)
+        if event_context.chat is not None:
+            db_group = TelegramGroup(id=event_context.chat_id, title=event_context.chat.title)
+            await db_group.asave(update_fields=['title'])
+        # update context
+        data.update(db_user=db_user, db_group=db_group)
+        return await handler(event, data)
