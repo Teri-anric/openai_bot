@@ -4,17 +4,6 @@ from aiogram import types as telegram_types
 from django.utils import timezone
 
 
-class InstructionGPT(models.Model):
-    prompt_text = models.TextField(default="Help with questions in the chat.")
-    gpt_model = models.TextField(default="gpt-3.5-turbo")
-
-    max_messages = models.IntegerField()
-    max_interval = models.DurationField()
-
-    def __str__(self):
-        return self.prompt_text
-
-
 class GPTResponse(models.Model):
     text = models.TextField()
 
@@ -61,12 +50,6 @@ class TelegramUser(models.Model):
             first_name=user.first_name
         )
 
-    @classmethod
-    async def create_and_asave_from_telegram_user(cls, user: telegram_types.User):
-        obj = cls.from_telegram_user(user)
-        await obj.asave()
-        return obj
-
     def __str__(self):
         return self.full_name
 
@@ -85,7 +68,6 @@ class TelegramGroup(models.Model):
 
     title = models.CharField(max_length=256)
     admins = models.ManyToManyField(TelegramUser)
-    gpt_instruction = models.ForeignKey(InstructionGPT, null=True, on_delete=models.SET_NULL)
 
     created_at = models.DateTimeField(auto_now=True)
 
@@ -123,3 +105,16 @@ class TelegramMessages(models.Model):
 
     def __str__(self):
         return f"{self.group or ''}>{self.user}: {self.text}"
+
+
+class InstructionGPT(models.Model):
+    prompt_text = models.TextField(default="Help with questions in the chat.")
+    gpt_model = models.TextField(default="gpt-3.5-turbo")
+
+    max_messages = models.IntegerField(default=10)
+    # max_interval = models.DurationField(default=)
+
+    telegram_group = models.OneToOneField(TelegramGroup, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.telegram_group.title}: {self.prompt_text}"

@@ -62,7 +62,7 @@ class RedisQueue:
     async def pop(self, group_id: int, count: int) -> list[int]:
         async with self.redis as client:
             queue_key = self._get_group_key(group_id)
-            messages = await self.redis.rpop(queue_key, count=count)
+            messages = await client.rpop(queue_key, count=count)
             return messages
 
 

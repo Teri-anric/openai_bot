@@ -36,8 +36,6 @@ services:
     build: .
     restart: always
     command: ["bash", "/app/entrypoint.sh"]
-    volumes:
-      - .:/app
     env_file:
       - .env
     expose:

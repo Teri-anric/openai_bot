@@ -20,9 +20,9 @@ class GetDBContextMiddleware(BaseMiddleware):
             await db_user.asave()
         # get group
         db_group = None
-        if event_context.chat is not None:
-            db_group = TelegramGroup(id=event_context.chat_id, title=event_context.chat.title)
-            await db_group.asave(update_fields=['title'])
+        if event_context.chat and event_context.chat.title:
+            db_group, _ = await TelegramGroup.objects.aget_or_create(id=event_context.chat_id,
+                                                                     title=event_context.chat.title)
         # update context
         data.update(db_user=db_user, db_group=db_group)
         return await handler(event, data)

@@ -16,23 +16,22 @@ async def new_group_register(update: types.ChatMemberUpdated, db_group: Telegram
     administrators = await update.chat.get_administrators()
 
     # Save admins
-    admins = [await TelegramUser.create_and_asave_from_telegram_user(administrator.user) for administrator in
-              administrators]
+    admins = []
+    for administrator in administrators:
+        user = TelegramUser.from_telegram_user(administrator.user)
+        await user.asave()
+        admins.append(user)
     await db_group.admins.aset(admins)
-    await db_group.asave(update_fields=['admins'])
+    await db_group.asave()
 
     # create new instruction
-    if not db_group.gpt_instruction:
-        instruction_gpt = InstructionGPT()
-        await instruction_gpt.asave()
-        db_group.gpt_instruction = instruction_gpt
-        await db_group.asave()
+    await InstructionGPT.objects.aget_or_create(telegram_group=db_group)
 
     return update.answer("Hi")
 
 
 @index_router.message(F.text)
-async def handled_messages(message: types.Message, queue: RedisQueue, db_user: TelegramUser, bot: Bot,
+async def handled_messages(message: types.Message, message_quote: RedisQueue, db_user: TelegramUser, bot: Bot,
                            db_group: TelegramGroup = None):
     message_obj = TelegramMessages(
         message_id=message.message_id,
@@ -44,11 +43,13 @@ async def handled_messages(message: types.Message, queue: RedisQueue, db_user: T
     if not db_group:
         return
 
-    count = await queue.add(db_group.id, message_obj.message_id)
-    if count < db_group.gpt_instruction.max_messages:
+    gpt_instruction = await InstructionGPT.objects.aget(telegram_group=db_group)
+
+    count = await message_quote.add(db_group.id, message_obj.message_id)
+    if count < gpt_instruction.max_messages:
         return
 
-    message_ids = await queue.pop(db_group.id, message_obj.message_id)
-    messages = await TelegramMessages.objects.aget(*message_ids)
-    await run_conversation(db_group.gpt_instruction, messages,
+    message_ids = await message_quote.pop(db_group.id, message_obj.message_id)
+    messages = TelegramMessages.objects.select_related("user").filter(message_id__in=message_ids).all()
+    await run_conversation(gpt_instruction, messages,
                            available_functions=get_available_functions(bot, message.chat.id))

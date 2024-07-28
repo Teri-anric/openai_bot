@@ -1,6 +1,7 @@
 import json
 from typing import Callable, Awaitable
 
+from django.db.models import QuerySet
 from openai.types.chat import ChatCompletionMessageToolCall
 from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionSystemMessageParam, \
     ChatCompletionMessageParam
@@ -8,14 +9,14 @@ from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionSyst
 from clientHook.apps.telegram.models import InstructionGPT, TelegramMessages
 
 
-def prepare_chat_messages(instruction: InstructionGPT, tg_messages: list[TelegramMessages]) -> list[ChatCompletionMessageParam]:
+async def prepare_chat_messages(instruction: InstructionGPT, tg_messages: QuerySet[TelegramMessages]) -> list[ChatCompletionMessageParam]:
     messages = [
         ChatCompletionSystemMessageParam(
             content=instruction.prompt_text,
             role="system"
         )
     ]
-    for tg_message in tg_messages:
+    async for tg_message in tg_messages:
         messages.append(
             ChatCompletionUserMessageParam(
                 content=json.dumps(dict(
