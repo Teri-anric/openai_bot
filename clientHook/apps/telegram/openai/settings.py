@@ -4,6 +4,7 @@ from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
 
 TOOLS: list[ChatCompletionToolParam] = [
     dict(
+        type="function",
         function=dict(
             name="answer",
             description="send answer to message",

@@ -27,7 +27,8 @@ SECRET_KEY = os.getenv("SECRET_KEY", token_hex())
 DEBUG = True
 
 SERVER_NAME = os.getenv("SERVER_NAME", "*")
-ALLOWED_HOSTS = [SERVER_NAME]
+# api.telegram.org == 78.47.210.95
+ALLOWED_HOSTS = [SERVER_NAME, "78.47.210.95", "api.telegram.org"]
 CSRF_TRUSTED_ORIGINS = ["https://"+SERVER_NAME, "http://"+SERVER_NAME]
 
 

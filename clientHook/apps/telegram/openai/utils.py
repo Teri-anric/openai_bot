@@ -21,10 +21,11 @@ async def prepare_chat_messages(instruction: InstructionGPT, tg_messages: QueryS
             ChatCompletionUserMessageParam(
                 content=json.dumps(dict(
                     message_id=tg_message.message_id,
-                    text=tg_message.text
-                )),
+                    text=tg_message.text,
+                    full_name_user=None if not tg_message.user else tg_message.user.full_name
+                ), ensure_ascii=False),
                 role="user",
-                name="anonymous" if not tg_message.user else tg_message.user.full_name
+                name="anonymous" if not tg_message.user else str(tg_message.user.id)
             )
         )
     return messages
