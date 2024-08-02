@@ -1,5 +1,4 @@
 from aiogram import Router, types, F, Bot
-from aiogram.fsm.context import FSMContext
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, JOIN_TRANSITION
 
 from clientHook.apps.telegram.models import TelegramGroup, TelegramUser, TelegramMessages, InstructionGPT
@@ -12,6 +11,7 @@ index_router = Router()
 
 @index_router.my_chat_member(ChatMemberUpdatedFilter(JOIN_TRANSITION))
 async def new_group_register(update: types.ChatMemberUpdated, db_group: TelegramGroup):
+    # FIXME add docstring
     # Fetch admin list
     administrators = await update.chat.get_administrators()
 
@@ -33,6 +33,7 @@ async def new_group_register(update: types.ChatMemberUpdated, db_group: Telegram
 @index_router.message(F.text)
 async def handled_messages(message: types.Message, message_quote: RedisQueue, db_user: TelegramUser, bot: Bot,
                            db_group: TelegramGroup = None):
+    # FIXME add docstring
     message_obj = TelegramMessages(
         message_id=message.message_id,
         user=db_user,
@@ -50,6 +51,7 @@ async def handled_messages(message: types.Message, message_quote: RedisQueue, db
         return
 
     message_ids = await message_quote.pop(db_group.id, message_obj.message_id)
+    # FIXME all() is not needed here
     messages = TelegramMessages.objects.select_related("user").filter(message_id__in=message_ids).all()
     await run_conversation(gpt_instruction, messages,
                            available_functions=get_available_functions(bot, message.chat.id))

@@ -4,7 +4,6 @@ from json import loads
 from .telegram_bot.base import dp, bot
 from .telegram_bot.utils import prepare_response
 from .telegram_bot.settting import TELEGRAM_PUBLIC_KEY, ALLOW_UPDATES
-from aiogram.dispatcher.event.bases import UNHANDLED
 from aiogram.methods import TelegramMethod
 from aiogram.types import FSInputFile
 from django.views.decorators.csrf import csrf_exempt
@@ -12,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 async def telegram_webhook(request: HttpRequest):
+    # FIXME add docstring
     if request.method == "GET":
         url = request.get_host() + request.get_full_path()
         try:

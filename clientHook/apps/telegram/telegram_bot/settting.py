@@ -1,7 +1,6 @@
 from os import getenv
-from aiogram.enums import UpdateType
 
-
+# FIXME move it to django settings, to not have credentials in different places
 TELEGRAM_TOKEN = getenv("TELEGRAM_TOKEN")
 TELEGRAM_PUBLIC_KEY = getenv("TELEGRAM_PUBLIC_KEY")
 
