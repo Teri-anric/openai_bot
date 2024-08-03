@@ -1,10 +1,8 @@
-from os import getenv
+from django.conf import settings
 
-# FIXME move it to django settings, to not have credentials in different places
-TELEGRAM_TOKEN = getenv("TELEGRAM_TOKEN")
-TELEGRAM_PUBLIC_KEY = getenv("TELEGRAM_PUBLIC_KEY")
+TELEGRAM_TOKEN = settings.TELEGRAM_TOKEN
+TELEGRAM_PUBLIC_KEY = settings.TELEGRAM_PUBLIC_KEY
 
-REDIS_URL = getenv("REDIS_URL")
+REDIS_URL = settings.REDIS_URL
 
-ALLOW_UPDATES = ['message', 'my_chat_member']
-
+ALLOW_UPDATES = settings.ALLOW_UPDATES
