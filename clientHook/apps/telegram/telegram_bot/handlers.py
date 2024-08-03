@@ -1,5 +1,8 @@
+from contextlib import suppress
+
 from aiogram import Router, types, F, Bot
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, JOIN_TRANSITION
+from aiogram.utils.chat_action import ChatActionSender
 from redis.asyncio import Redis
 
 from clientHook.apps.telegram.models import (
@@ -33,8 +36,11 @@ async def new_group_register(update: types.ChatMemberUpdated, db_group: Telegram
     # Save admins
     admins = []
     for administrator in administrators:
-        user = TelegramUser.from_telegram_user(administrator.user)
-        await user.asave()
+        user, _ = await TelegramUser.objects.aget_or_create(
+            user_id=administrator.user.id,
+            last_name=administrator.user.last_name,
+            first_name=administrator.user.first_name,
+        )
         admins.append(user)
     await db_group.admins.aset(admins)
     await db_group.asave()
@@ -66,8 +72,18 @@ async def handled_messages(
         bot (Bot): The bot instance.
         db_group (TelegramGroup, optional): The database representation of the group. Defaults to None.
     """
+    reply_to_message = None
+    if message.reply_to_message:
+        with suppress(TelegramMessages.DoesNotExist):  # type: ignore
+            reply_to_message = await TelegramMessages.objects.aget(
+                message_id=message.reply_to_message.message_id
+            )
     message_obj = TelegramMessages(
-        message_id=message.message_id, user=db_user, group=db_group, text=message.text
+        message_id=message.message_id,
+        user=db_user,
+        group=db_group,
+        text=message.text,
+        reply_to_message=reply_to_message
     )
     await message_obj.asave()
     if not db_group:
@@ -87,17 +103,17 @@ async def handled_messages(
         await redis.decrby(
             message_count_group_key, gpt_instruction.trigger_message_count
         )
-
-    messages = (
-        TelegramMessages.objects.select_related(
-            "user", "reply_to_message", "reply_to_message__user"
+    async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
+        messages = (
+            TelegramMessages.objects.select_related(
+                "user", "reply_to_message", "reply_to_message__user"
+            )
+            .filter(group=db_group, created_at__lte=message_obj.created_at)
+            .order_by("-created_at")[: gpt_instruction.context_message_count]
         )
-        .filter(group=db_group, created_at__lte=message_obj.created_at)
-        .order_by("-created_at")[: gpt_instruction.context_message_count]
-    )
 
-    await run_conversation(
-        gpt_instruction,
-        messages,
-        available_functions=get_available_functions(bot, message.chat.id),
-    )
+        await run_conversation(
+            gpt_instruction,
+            messages,
+            available_functions=get_available_functions(bot, message.chat.id),
+        )

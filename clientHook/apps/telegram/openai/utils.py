@@ -11,7 +11,6 @@ from openai.types.chat import (
 )
 
 from clientHook.apps.telegram.models import InstructionGPT, TelegramMessages
-from clientHook.apps.telegram.telegram_bot.base import bot
 
 
 def _message_to_dict(message: TelegramMessages, include_reply: bool = True) -> dict:
@@ -35,7 +34,7 @@ def _message_to_dict(message: TelegramMessages, include_reply: bool = True) -> d
         ),
         reply_to_message=(
             None
-            if not message.reply_to_message or not include_reply
+            if not include_reply or not message.reply_to_message
             else _message_to_dict(message.reply_to_message, False)
         ),
     )
@@ -51,6 +50,9 @@ def _prepare_message(message: TelegramMessages) -> ChatCompletionMessageParam:
     Returns:
         ChatCompletionMessageParam: The prepared message for chat completion.
     """
+    # fix circular import
+    from clientHook.apps.telegram.telegram_bot.base import bot
+
     if bot and message.user.user_id == bot.id:
         return ChatCompletionAssistantMessageParam(
             content=json.dumps(_message_to_dict(message)), role="assistant"

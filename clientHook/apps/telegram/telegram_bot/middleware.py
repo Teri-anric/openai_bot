@@ -36,8 +36,11 @@ class GetDBContextMiddleware(BaseMiddleware):
         """
         if event_context.user is None:
             return None
-        db_user = TelegramUser.from_telegram_user(event_context.user)
-        await db_user.asave()
+        db_user, _ = await TelegramUser.objects.aget_or_create(
+            user_id=event_context.user.id,
+            last_name=event_context.user.last_name,
+            first_name=event_context.user.first_name,
+        )
         return db_user
 
     @staticmethod
@@ -100,8 +103,10 @@ class SaveMyMessageSessionMiddleware(BaseRequestMiddleware):
         :return: A TelegramUser instance.
         """
         if not self._db_bot_user:
-            self._db_bot_user = TelegramUser.from_telegram_user(await bot.me())
-            await self._db_bot_user.asave()
+            user = await bot.me()
+            self._db_bot_user, _ = await TelegramUser.objects.aget_or_create(
+                user_id=user.id, last_name=user.last_name, first_name=user.first_name
+            )
         return self._db_bot_user
 
     async def save_message(self, bot: Bot, method: SendMessage, result: Message):
@@ -127,6 +132,7 @@ class SaveMyMessageSessionMiddleware(BaseRequestMiddleware):
                 message_id=result.message_id,
                 group=db_group,
                 user=db_bot_user,
+                text=method.text,
                 reply_to_message=reply_message,
             )
             await db_message.asave()

@@ -9,7 +9,7 @@ from .utils import prepare_chat_messages, run_functions
 
 # Initialize the OpenAI client if the API key is set
 client: AsyncOpenAI = None
-if not OPENAI_API_KEY:
+if OPENAI_API_KEY:
     client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 

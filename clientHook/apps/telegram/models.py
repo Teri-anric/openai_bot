@@ -1,8 +1,7 @@
-from django.db import models
-import json
+from uuid import uuid4
+
 from aiogram import types as telegram_types
-from django.utils import timezone
-from uuid import uuid4, UUID
+from django.db import models
 
 
 class BaseModel(models.Model):
@@ -83,7 +82,6 @@ class TelegramGroup(BaseModel):
         admins (ManyToManyField): Many-to-many relationship with TelegramUser indicating the admins of the group.
     """
 
-    # FIXME in django admin, add function to check if this group is exist or not
     group_id = models.BigIntegerField(unique=True)
 
     title = models.CharField(max_length=256)
@@ -144,29 +142,29 @@ class InstructionGPT(BaseModel):
     """
 
     GPT_MODEL_CHOICES = [
-        "gpt-4o",
-        "gpt-4o-2024-05-13",
-        "gpt-4o-mini",
-        "gpt-4o-mini-2024-07-18",
-        "gpt-4-turbo",
-        "gpt-4-turbo-2024-04-09",
-        "gpt-4-0125-preview",
-        "gpt-4-turbo-preview",
-        "gpt-4-1106-preview",
-        "gpt-4-vision-preview",
-        "gpt-4",
-        "gpt-4-0314",
-        "gpt-4-0613",
-        "gpt-4-32k",
-        "gpt-4-32k-0314",
-        "gpt-4-32k-0613",
-        "gpt-3.5-turbo",
-        "gpt-3.5-turbo-16k",
-        "gpt-3.5-turbo-0301",
-        "gpt-3.5-turbo-0613",
-        "gpt-3.5-turbo-1106",
-        "gpt-3.5-turbo-0125",
-        "gpt-3.5-turbo-16k-0613",
+        ("gpt-4o", "GPT-4o $5/$15"),
+        ("gpt-4o-2024-05-13", "GPT-4o-2024-05-13 $5/$15"),
+        ("gpt-4o-mini", "GPT-4o-mini $0.15/$0.6"),
+        ("gpt-4o-mini-2024-07-18", "GPT-4o-mini-2024-07-18 $0.15/$0.6"),
+        ("gpt-4-turbo", "GPT-4-turbo $10/$30"),
+        ("gpt-4-turbo-2024-04-09", "GPT-4-turbo-2024-04-09 $10/$30"),
+        ("gpt-4-0125-preview", "GPT-4-0125-preview $10/$30"),
+        ("gpt-4-turbo-preview", "GPT-4-turbo-preview $10/$30"),
+        ("gpt-4-1106-preview", "GPT-4-1106-preview $10/$30"),
+        ("gpt-4-vision-preview", "GPT-4-vision-preview $10/$30"),
+        ("gpt-4", "GPT-4 $30/$60"),
+        ("gpt-4-0314", "GPT-4-0314 $30/$60"),
+        ("gpt-4-0613", "GPT-4-0613 $30/$60"),
+        ("gpt-4-32k", "GPT-4-32k $60/$120"),
+        ("gpt-4-32k-0314", "GPT-4-32k-0314 $60/$120"),
+        ("gpt-4-32k-0613", "GPT-4-32k-0613 $60/$120"),
+        ("gpt-3.5-turbo", "GPT-3.5-turbo $0.5/$1.5"),
+        ("gpt-3.5-turbo-0301", "GPT-3.5-turbo-0301 $1.5/$2"),
+        ("gpt-3.5-turbo-0613", "GPT-3.5-turbo-0613 $1.5/$2"),
+        ("gpt-3.5-turbo-1106", "GPT-3.5-turbo-1106 $1/$2"),
+        ("gpt-3.5-turbo-0125", "GPT-3.5-turbo-0125 $0.5/$1.5"),
+        ("gpt-3.5-turbo-16k", "GPT-3.5-turbo-16k $3/$4"),
+        ("gpt-3.5-turbo-16k-0613", "GPT-3.5-turbo-16k-0613 $3/$4"),
     ]
 
     gpt_model = models.CharField(choices=GPT_MODEL_CHOICES, default="gpt-3.5-turbo")

@@ -28,25 +28,25 @@ async def telegram_webhook(request: HttpRequest):
     assert (
         bot is not None
     ), "Can't work telegram bot, not set `TELEGRAM_TOKEN` environments variable"
+    try:
+        if request.method == "GET":
+            url = request.get_host() + request.get_full_path()
+            try:
+                certify = None
+                if TELEGRAM_PUBLIC_KEY:
+                    certify = FSInputFile(TELEGRAM_PUBLIC_KEY)
+                result = await bot.set_webhook(
+                    url, certificate=certify, allowed_updates=ALLOW_UPDATES
+                )
+                return JsonResponse(dict(status=result))
+            except Exception as e:
+                return JsonResponse(dict(status=False, error_message=str(e)))
 
-    if request.method == "GET":
-        url = request.get_host() + request.get_full_path()
-        try:
-            certify = None
-            if TELEGRAM_PUBLIC_KEY:
-                certify = FSInputFile(TELEGRAM_PUBLIC_KEY)
-            result = await bot.set_webhook(
-                url, certificate=certify, allowed_updates=ALLOW_UPDATES
-            )
-            return JsonResponse(dict(status=result))
-        except Exception as e:
-            return JsonResponse(dict(status=False, error_message=str(e)))
+        if request.method != "POST":
+            return HttpResponse(status=405)
 
-    if request.method != "POST":
-        return HttpResponse(status=405)
-
-    result = await dp.feed_raw_update(bot, loads(request.body))
-    if isinstance(result, TelegramMethod):
-        return await prepare_response(bot, result)
-
-    return HttpResponse(status=200)
+        result = await dp.feed_raw_update(bot, loads(request.body))
+        if isinstance(result, TelegramMethod):
+            return await prepare_response(bot, result)
+    finally:
+        return HttpResponse(status=200)

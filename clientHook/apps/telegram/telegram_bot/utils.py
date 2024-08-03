@@ -4,10 +4,7 @@ from typing import Dict
 from aiogram import Bot
 from aiogram.methods import TelegramMethod
 from aiogram.types import InputFile
-from aiohttp import MultipartWriter
-
 from django.http import HttpResponse
-from redis.asyncio import Redis
 
 
 async def prepare_response(bot: Bot, result: TelegramMethod = None) -> HttpResponse:
@@ -48,11 +45,13 @@ async def prepare_response(bot: Bot, result: TelegramMethod = None) -> HttpRespo
 
 def get_available_functions(bot: Bot, chat_id: int):
     async def answer(text: str):
-        await bot.send_message(
-            chat_id=chat_id, text=text, reply_to_message_id=message_id
-        )
+        if not text:
+            return
+        await bot.send_message(chat_id=chat_id, text=text)
 
     async def reply(message_id: int, text: str):
+        if not text:
+            return
         await bot.send_message(
             chat_id=chat_id, text=text, reply_to_message_id=message_id
         )
